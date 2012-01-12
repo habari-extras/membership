@@ -56,7 +56,7 @@ class Membership extends Plugin
 			}
 		}
 
-		$settings = $form->publish_controls->append( 'fieldset', 'menu_set', _t( 'Membership', 'membership' ) );
+		$settings = $form->publish_controls->append( 'fieldset', 'token_set', _t( 'Membership', 'membership' ) );
 		$settings->append( 'checkboxes', 'tokens', 'null:null', _t( 'Membership', 'membership' ), $tokens );
 
 		// If this is an existing post, see if it has tokens already
