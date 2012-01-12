@@ -2,6 +2,14 @@
 
 class Membership extends Plugin
 {
+	/**
+	 * Load text domain for i18n
+	 **/
+	public function action_init()
+	{
+		$this->load_text_domain( "membership" );
+	}
+
 	public function configure()
 	{
 		$fs = new MembershipTokens(); // FormStorage
@@ -35,6 +43,38 @@ class Membership extends Plugin
 		$ui->save();
 	}
 
+	/**
+	 * Add tokens to the publish form
+	 **/
+	public function action_form_publish( $form, $post )
+	{
+
+		$tokens = array();
+		foreach( ACL::all_tokens() as $token) {
+			if( $token->token_group == 'membership' ) {
+				$tokens[ $token->id ] = $token->description;
+			}
+		}
+
+		$settings = $form->publish_controls->append( 'fieldset', 'menu_set', _t( 'Membership', 'membership' ) );
+		$settings->append( 'checkboxes', 'tokens', 'null:null', _t( 'Membership', 'membership' ), $tokens );
+
+		// If this is an existing post, see if it has tokens already
+		if ( 0 != $post->id ) {
+			$form->tokens->value = $post->has_tokens( array_keys( $tokens ) );
+		}
+	}
+
+	/**
+	 * Process tokens when the publish form is received
+	 **/
+	public function action_publish_post( $post, $form )
+	{
+		if( count( $form->tokens->value ) ) {
+			$post->add_tokens( $form->tokens->value );
+		}
+	}
+
 }
 
 class MembershipTokens implements FormStorage {
@@ -44,7 +84,7 @@ class MembershipTokens implements FormStorage {
 	 *
 	 * @param string $key The name of the form field to store.
 	 * @param mixed $value The value of the form field
-	 */
+	 **/
 	public function field_save( $key, $value )
 	{
 		if( $key == 'tokens' ) {
@@ -58,6 +98,11 @@ class MembershipTokens implements FormStorage {
 					$description, // description as entered
 					"membership" // group = "membership"
 				);
+				// Deny the anonymous group access this new token
+				$anon = UserGroup::get('anonymous');
+				if ( false != $anon ) {
+					$anon->deny('private');
+				}
 			}
 
 			// destroy tokens for newly removed
@@ -74,7 +119,7 @@ class MembershipTokens implements FormStorage {
 	 *
 	 * @param string $key Unused parameter, since this only ever uses one Option
 	 * @return array
-	 */
+	 **/
 	public function field_load( $key )
 	{
 		if( $key == 'tokens' ) {
