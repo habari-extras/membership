@@ -93,15 +93,17 @@ class MembershipTokens implements FormStorage {
 
 			// create tokens for newly added
 			foreach( array_diff( $new_tokens, $old_tokens ) as $description ) {
+				$name = "membership_" . ACL::normalize_token( $description );
+
 				ACL::create_token(
-					"membership_" . ACL::normalize_token( $description ), // prefixed, normalized name
+					$name, // prefixed, normalized name
 					$description, // description as entered
 					"membership" // group = "membership"
 				);
 				// Deny the anonymous group access this new token
 				$anon = UserGroup::get('anonymous');
 				if ( false != $anon ) {
-					$anon->deny('private');
+					$anon->deny( $name );
 				}
 			}
 
