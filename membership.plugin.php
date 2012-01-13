@@ -8,6 +8,7 @@ class Membership extends Plugin
 	public function action_init()
 	{
 		$this->load_text_domain( "membership" );
+		$this->add_template( 'membership', dirname( __FILE__ ) . '/membership.php' );
 	}
 
 	public function configure()
@@ -58,6 +59,7 @@ class Membership extends Plugin
 
 		$settings = $form->publish_controls->append( 'fieldset', 'token_set', _t( 'Membership', 'membership' ) );
 		$settings->append( 'checkboxes', 'tokens', 'null:null', _t( 'Membership', 'membership' ), $tokens );
+		$settings->class = 'container formcontrol transparent';
 
 		// If this is an existing post, see if it has tokens already
 		if ( 0 != $post->id ) {
@@ -75,6 +77,61 @@ class Membership extends Plugin
 		}
 	}
 
+	/**
+	 * Log this request in as a user if a key is present in the URL
+	 * @param $user Comes in form Habari empty usually
+	 * @return User The user to be identified as, if a key is present in the URL
+	 */
+	public function filter_user_identify($user)
+	{
+		if(isset($_GET['mkey'])) {
+			list($id, $key) = explode('_', $_GET['mkey']);
+			$key = $this->get_user_key($id);
+			if($_GET['mkey'] == $key) {
+				$user = User::get_by_id($id);
+			}
+		}
+		return $user;
+	}
+
+	/**
+	 * Get the key for a user, or make one, for the specified or current user
+	 * @param null|User|integer $user Null for the current user, or the id or User object of a user
+	 * @return string The key to use to pass identify
+	 */
+	public function get_user_key($user = null)
+	{
+		if($user) {
+			$user = User::get($user);
+		}
+		else {
+			$user = User::identify();
+		}
+		if($user->info->membership_key == '') {
+			$user->info->membership_key = sha1(rand(0, 65535) . $user->id);
+			$user->update();
+		}
+
+		return $user->id . '_' . $user->info->membership_key;
+	}
+
+	public function filter_block_list($block_list)
+	{
+		$block_list['membership'] = _t( 'Member Feed');
+		return $block_list;
+	}
+	
+	public function action_block_content_membership($block, $theme)
+	{
+		$content = 'zz';
+		if(User::identify()->id != 0) {
+			$content .= '<a href="' . URL::get('atom_feed', array('index' => 1, 'mkey' => $this->get_user_key())) . '">';
+			$content .= _t('My feed', 'membership');
+			$content .= '</a>';
+		}
+		$block->content = $content;
+	}
+	
 }
 
 class MembershipTokens implements FormStorage {
