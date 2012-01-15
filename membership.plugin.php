@@ -123,10 +123,10 @@ class Membership extends Plugin
 	
 	public function action_block_content_membership($block, $theme)
 	{
-		$content = 'zz';
+		$content = '';
 		if(User::identify()->id != 0) {
 			$content .= '<a href="' . URL::get('atom_feed', array('index' => 1, 'mkey' => $this->get_user_key())) . '">';
-			$content .= _t('My feed', 'membership');
+			$content .= _t('Your feed', 'membership');
 			$content .= '</a>';
 		}
 		$block->content = $content;
