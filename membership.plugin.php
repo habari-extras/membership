@@ -8,7 +8,7 @@ class Membership extends Plugin
 	public function action_init()
 	{
 		$this->load_text_domain( "membership" );
-		$this->add_template( 'membership', dirname( __FILE__ ) . '/membership.php' );
+		$this->add_template( 'block.membership', dirname( __FILE__ ) . '/block.membership.php' );
 	}
 
 	public function configure()
