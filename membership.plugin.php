@@ -72,8 +72,14 @@ class Membership extends Plugin
 	 **/
 	public function action_publish_post( $post, $form )
 	{
-		if( count( $form->tokens->value ) ) {
+		if( isset($form->tokens) ) {
+		if( count($form->tokens->value ) )
+			{ // add them
 			$post->add_tokens( $form->tokens->value );
+			} else { // remove them
+			//$post->remove_tokens($tokens);
+			$post->delete_tokens(); // delete all
+			}
 		}
 	}
 
